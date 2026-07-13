@@ -26,3 +26,7 @@ stats.html
 *.sw?
 
 *.tsbuildinfo
+
+# Tauri signing keys
+*.key
+*.key.pub
