@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { native } from "../lib/native";
-import { type ToolContext } from "./context";
+import type { ToolContext } from "./context";
 import { vectorStore } from "../lib/vectorStore";
 import { checkReadableCanonical } from "../lib/security";
 
