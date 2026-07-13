@@ -4,6 +4,7 @@ allowBuilds:
   esbuild: true
   msgpackr-extract: false
   msw: true
-  onnxruntime-node: set this to true or false
-  protobufjs: set this to true or false
-  sharp: set this to true or false
+  onnxruntime-node: true
+  protobufjs: true
+  sharp: true
+  "@biomejs/biome": true
