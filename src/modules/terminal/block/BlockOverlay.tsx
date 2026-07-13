@@ -196,6 +196,22 @@ function Toolbar({ block, all, onSearch }: ChromeProps) {
   return (
     <div className="bt-tools">
       {failed && <span className="bt-exit">exit {block.exitCode}</span>}
+      {failed && (
+        <button
+          type="button"
+          title="Explain error with AI"
+          className="bt-btn text-destructive hover:bg-destructive/10 gap-1 px-1.5"
+          onClick={() => {
+            const out = all.readOutput(block.id) ?? "";
+            const text = out ? `$ ${block.command}\n${out}` : `$ ${block.command}`;
+            useChatStore.getState().attachSelection(text, "terminal");
+            useChatStore.getState().focusInput("Explain the error in this command output.");
+          }}
+        >
+          <HugeiconsIcon icon={SparklesIcon} size={12.5} strokeWidth={1.75} />
+          <span className="text-[10px] font-medium">Explain</span>
+        </button>
+      )}
       {duration && <span className="bt-dur">{duration}</span>}
       {!block.running && !!block.command && (
         <button

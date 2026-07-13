@@ -1,6 +1,8 @@
 import { ensureMonoFontsLoaded } from "@/lib/fonts";
 import { usePreferencesStore } from "@/modules/settings/preferences";
 import { invoke } from "@tauri-apps/api/core";
+import { toast } from "sonner";
+import { useChatStore } from "@/modules/ai/store/chatStore";
 import type { SearchAddon } from "@xterm/addon-search";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -632,8 +634,26 @@ function bindLeafToSlot(leafId: number, s: Session): void {
       // 7 emitted by untrusted command output (remote SSH, `cat` of an
       // attacker file, etc.).
       const shellState = createShellIntegrationState();
-      const prompt = registerPromptTracker(term, shellState, (running) =>
-        onLeafCommandState(leafId, running),
+      const prompt = registerPromptTracker(
+        term,
+        shellState,
+        (running) => onLeafCommandState(leafId, running),
+        (exitCode) => {
+          if (exitCode > 0) {
+            toast.error(`Command failed with exit code ${exitCode}`, {
+              action: {
+                label: "Explain",
+                onClick: () => {
+                  const buf = getTerminalBufferText(leafId, 50);
+                  if (buf) {
+                    useChatStore.getState().attachSelection(buf, "terminal");
+                    useChatStore.getState().focusInput("Explain the terminal error in the attached output.");
+                  }
+                },
+              },
+            });
+          }
+        }
       );
       const cwd = registerCwdHandler(
         term,
@@ -951,26 +971,7 @@ export function useTerminalSession({
 
   const getBuffer = useCallback(
     (maxLines = 200): string | null => {
-      const s = sessions.get(leafId);
-      if (!s) return null;
-      const slot = getLiveSlotForLeaf(leafId);
-      if (slot) {
-        const buf = slot.term.buffer.active;
-        const total = buf.length;
-        const lines: string[] = [];
-        const start = Math.max(0, total - maxLines);
-        for (let i = start; i < total; i++) {
-          lines.push(buf.getLine(i)?.translateToString(true) ?? "");
-        }
-        while (lines.length && lines[lines.length - 1] === "") lines.pop();
-        return lines.join("\n");
-      }
-      if (!s.snapshot) return "";
-      const plain = stripAnsi(s.snapshot);
-      const lines = plain.split(/\r?\n/);
-      const tail = lines.slice(-maxLines);
-      while (tail.length && tail[tail.length - 1] === "") tail.pop();
-      return tail.join("\n");
+      return getTerminalBufferText(leafId, maxLines);
     },
     [leafId],
   );
@@ -1071,6 +1072,29 @@ export function useTerminalSession({
       clearSearch,
     ],
   );
+}
+
+function getTerminalBufferText(leafId: number, maxLines = 200): string | null {
+  const s = sessions.get(leafId);
+  if (!s) return null;
+  const slot = getLiveSlotForLeaf(leafId);
+  if (slot) {
+    const buf = slot.term.buffer.active;
+    const total = buf.length;
+    const lines: string[] = [];
+    const start = Math.max(0, total - maxLines);
+    for (let i = start; i < total; i++) {
+      lines.push(buf.getLine(i)?.translateToString(true) ?? "");
+    }
+    while (lines.length && lines[lines.length - 1] === "") lines.pop();
+    return lines.join("\n");
+  }
+  if (!s.snapshot) return "";
+  const plain = stripAnsi(s.snapshot);
+  const lines = plain.split(/\r?\n/);
+  const tail = lines.slice(-maxLines);
+  while (tail.length && tail[tail.length - 1] === "") tail.pop();
+  return tail.join("\n");
 }
 
 const ANSI_RE =

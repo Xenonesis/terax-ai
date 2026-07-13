@@ -3,6 +3,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { usePresence } from "@/lib/usePresence";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { HashtagIcon } from "@hugeicons/core-free-icons";
 import { useWorkspaceFiles } from "../hooks/useWorkspaceFiles";
 import { useComposer } from "../lib/composer";
 import { SLASH_COMMANDS } from "../lib/slashCommands";
@@ -196,6 +198,28 @@ export function AiComposerInput() {
     if (it) onPickItem(it);
   };
 
+  const openSnippetPicker = () => {
+    const el = c.textareaRef.current;
+    if (!el) return;
+    el.focus();
+    const val = c.value;
+    const caret = el.selectionStart ?? 0;
+    const needsSpace = val.length > 0 && caret > 0 && !/\s/.test(val[caret - 1]);
+    const prefix = needsSpace ? " #" : "#";
+    const newVal = val.slice(0, caret) + prefix + val.slice(caret);
+    c.setValue(newVal);
+    const newCaret = caret + prefix.length;
+    setTimeout(() => {
+      el.setSelectionRange(newCaret, newCaret);
+      setTrigger({
+        start: newCaret - 1,
+        end: newCaret,
+        query: "",
+        char: "#",
+      });
+    }, 0);
+  };
+
   const voiceLabel = c.voice.recording
     ? "Listening…"
     : c.voice.transcribing
@@ -264,6 +288,14 @@ export function AiComposerInput() {
                 "placeholder:text-muted-foreground/60",
               )}
             />
+            <button
+              type="button"
+              title="Prompt Library / Snippets (#)"
+              onClick={openSnippetPicker}
+              className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/70 hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <HugeiconsIcon icon={HashtagIcon} size={14} strokeWidth={1.75} />
+            </button>
             <AgentSwitcher />
           </div>
         </PopoverAnchor>

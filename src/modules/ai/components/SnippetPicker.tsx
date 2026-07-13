@@ -1,6 +1,8 @@
 import { PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { openSettingsWindow } from "@/modules/settings/openSettingsWindow";
+import { Settings01Icon } from "@hugeicons/core-free-icons";
 import type { SlashCommandMeta } from "../lib/slashCommands";
 import type { Snippet } from "../lib/snippets";
 
@@ -126,6 +128,16 @@ export function SnippetPickerContent({
           )}
         </div>
       )}
+      <div className="flex items-center justify-between border-t border-border/40 bg-muted/30 px-2 py-1.5 pointer-events-auto">
+        <button
+          type="button"
+          onClick={() => void openSettingsWindow("agents")}
+          className="flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[10.5px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <HugeiconsIcon icon={Settings01Icon} size={11} strokeWidth={1.75} />
+          <span>Manage Snippets</span>
+        </button>
+      </div>
     </PopoverContent>
   );
 }
